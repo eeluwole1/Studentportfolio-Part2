@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo_data:/data/db
+    expose:
+      - "27017"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/bank_app
+      - SECRET_KEY=supersecretkey
+    depends_on:
+      - mongo
+    expose:
+      - "5000"
+
+  frontend:
+    build:
+      context: ./studentportfolio
+      dockerfile: Dockerfile
+    environment:
+      - API_URL=http://backend:5000
+    expose:
+      - "80"
+
+  nginx:
+    image: nginx:alpine
+    restart: always
+    depends_on:
+      - frontend
+      - backend
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - .:/usr/share/nginx/html
+
+volumes:
+  mongo_data:
